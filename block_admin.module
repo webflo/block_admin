@@ -1,0 +1,70 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * This is the file description for Block Admin module.
+ *
+ * In this more verbose, multi-line description, you can specify what this
+ * file does exactly. Make sure to wrap your documentation in column 78 so
+ * that the file can be displayed nicely in default-sized consoles.
+ */
+
+/**
+ * Implements hook_permission().
+ */
+function block_admin_permission() {
+  $perm = array();
+
+  $admin_theme = variable_get('admin_theme');
+  
+  foreach (list_themes() as $key => $theme) {
+    if (!empty($theme->status) || ($admin_theme && $theme->name == $admin_theme)) {
+      $perm['administer blocks theme - ' . $theme->name] = array(
+        'title' => t('Administer blocks for %theme', array('%theme' => $theme->info['name'])),
+      );
+    }
+  }
+
+  return $perm;
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function block_admin_menu_alter(&$items) {
+  $default_theme = variable_get('theme_default', 'bartik');
+  $items['admin/structure/block']['access callback'] = '_block_admin_block_themes_access';
+  $items['admin/structure/block']['access arguments'] = array($default_theme);
+  
+  $items['admin/structure/block/manage/%/%']['access callback'] = '_block_admin_block_themes_access';
+  $items['admin/structure/block/manage/%/%']['access arguments'] = array($default_theme);
+  
+  $items['admin/structure/block/manage/%/%/delete']['access callback'] = '_block_admin_block_themes_access';
+  $items['admin/structure/block/manage/%/%/delete']['access arguments'] = array($default_theme);
+  
+  $items['admin/structure/block/add']['access callback'] = '_block_admin_block_themes_access';
+  $items['admin/structure/block/add']['access arguments'] = array($default_theme);  
+
+
+  foreach (list_themes() as $key => $theme) {
+    $items['admin/structure/block/list/' . $key]['access callback'] = '_block_admin_block_themes_access';
+    
+    if ($key != $default_theme) {
+      $items['admin/structure/block/list/' . $key . '/add']['access callback'] = '_block_admin_block_themes_access';
+      $items['admin/structure/block/list/' . $key . '/add']['access arguments'] = array($theme);
+    }
+    
+    $items['admin/structure/block/demo/' . $key]['access callback'] = '_block_admin_block_themes_access';
+    $items['admin/structure/block/demo/' . $key]['access arguments'] = array($theme);    
+  }
+}
+
+function _block_admin_block_themes_access($theme) {
+  if (!is_object($theme)) {
+    $themes = list_themes();
+    $theme = $themes[$theme];
+  }
+
+  return (user_access('administer blocks') || user_access('administer blocks theme - ' . $theme->name)) && drupal_theme_access($theme);
+}

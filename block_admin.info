@@ -1,0 +1,6 @@
+; $Id$
+name = Block Admin
+description = "Administer Block per Theme"
+
+; Core version (required)
+core = 7.x
